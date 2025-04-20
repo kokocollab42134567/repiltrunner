@@ -13,10 +13,9 @@ const COOKIE_FILE = './cookies.json';
   console.log('🚀 Launching browser...');
 
   const browser = await puppeteer.launch({
-    headless: 'new',
+    headless: false,
     protocolTimeout: 180000,
     timeout: 180000,
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable',
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -73,16 +72,19 @@ const COOKIE_FILE = './cookies.json';
       timeout: 90000,
     });
 
-    console.log('⏳ Waiting for page JavaScript to render...');
-    await page.waitForXPath("//button[contains(., 'Run')]", { timeout: 60000 });
+    console.log('⏳ Waiting for the exact "Run" button to appear...');
+await page.waitForSelector('button.useView_view__C2mnv.css-1qheakp > svg.css-492dz9 + span.css-1xdyip3', {
+  timeout: 60000,
+});
 
-    const [runButton] = await page.$x("//button[contains(., 'Run')]");
-    if (runButton) {
-      console.log('▶️ "Run" button detected, clicking...');
-      await runButton.click();
-    } else {
-      console.warn('⚠️ Button element found but handle is null.');
-    }
+const runButton = await page.$('button.useView_view__C2mnv.css-1qheakp');
+if (runButton) {
+  console.log('▶️ Exact "Run" button detected, clicking...');
+  await runButton.click();
+} else {
+  console.warn('⚠️ Exact "Run" button not found.');
+}
+
 
     // Optional: Keep the browser open for observation
     // await page.waitForTimeout(10000);

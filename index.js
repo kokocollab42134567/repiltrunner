@@ -63,45 +63,55 @@ const DEBUG_HTML_FILE = './debug-page.html';
     console.log(`📁 Cookies saved to: ${COOKIE_FILE}`);
 
     console.log('🔄 Navigating to REPL project...');
-    await page.goto('https://replit.com/@kingdomsunion/AromaticKeySyntax', {
-      waitUntil: 'domcontentloaded',
-      timeout: 60000
-    });
+try {
+  await page.goto('https://replit.com/@kingdomsunion/AromaticKeySyntax', {
+    waitUntil: 'domcontentloaded',
+    timeout: 60000,
+  });
 
-    console.log('⏳ Waiting for page JavaScript to render...');
-    await page.waitForSelector('button.useView_view__C2mnv.css-1qheakp', {
-      timeout: 60000
-    });
+  console.log('⏳ Waiting for page JavaScript to render...');
+  await page.waitForSelector('button.useView_view__C2mnv.css-1qheakp', {
+    timeout: 60000,
+  });
 
-    fs.writeFileSync(DEBUG_HTML_FILE, await page.content());
-    console.log('🧾 Debug HTML saved after navigating to project');
+  console.log('✅ "Run" button found.');
 
-    console.log('⏱ Waiting up to 2 minutes for "Run" button...');
-    const startTime = Date.now();
-    const maxWaitTime = 120000;
-    let clicked = false;
+  console.log('⏱ Waiting up to 2 minutes for "Run" button...');
+  const startTime = Date.now();
+  const maxWaitTime = 120000;
+  let clicked = false;
 
-    while (Date.now() - startTime < maxWaitTime) {
-      try {
-        const runButton = await page.$('button.useView_view__C2mnv.css-1qheakp');
-        if (runButton) {
-          console.log('▶️ "Run" button detected, clicking...');
-          await runButton.click();
-          clicked = true;
-          break;
-        } else {
-          console.log('🔍 "Run" button not found, retrying...');
-        }
-      } catch (err) {
-        console.error('⚠️ Error while checking/clicking button:', err.message);
+  while (Date.now() - startTime < maxWaitTime) {
+    try {
+      const runButton = await page.$('button.useView_view__C2mnv.css-1qheakp');
+      if (runButton) {
+        console.log('▶️ "Run" button detected, clicking...');
+        await runButton.click();
+        clicked = true;
+        break;
+      } else {
+        console.log('🔍 "Run" button not found, retrying...');
       }
-
-      await page.waitForTimeout(5000);
+    } catch (err) {
+      console.error('⚠️ Error while checking/clicking button:', err.message);
     }
 
-    if (!clicked) {
-      console.warn('⏳ Timed out waiting for "Run" button.');
-    }
+    await page.waitForTimeout(5000);
+  }
+
+  if (!clicked) {
+    console.warn('⏳ Timed out waiting for "Run" button.');
+  }
+
+} catch (err) {
+  console.error('❌ Login failed or page flow error:', err.message);
+  const title = await page.title();
+  const url = page.url();
+  const html = await page.content();
+  console.log(`📄 Page title: ${title}`);
+  console.log(`🌍 Page URL: ${url}`);
+  console.log(`🧾 Page HTML:\n${html}`);
+}
 
     // Keep browser open for monitoring or interaction
     console.log('📡 Monitoring complete. You can manually close the browser.');

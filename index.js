@@ -12,28 +12,18 @@ const DEBUG_HTML_FILE = './debug-page.html';
 (async () => {
   console.log('🚀 Launching browser...');
   const browser = await puppeteer.launch({
-    headless: 'new',
-    protocolTimeout: 180000,
+    headless: 'new', // safer for headless servers
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu',
-      '--disable-features=IsolateOrigins,site-per-process',
-      '--disable-web-security',
-      '--disable-http2',
-      '--proxy-server="direct://"',
-      '--proxy-bypass-list=*',
-      '--disable-background-timer-throttling',
-      '--disable-backgrounding-occluded-windows',
-      '--disable-renderer-backgrounding',
-      '--disable-accelerated-2d-canvas',
-      '--disable-ipc-flooding-protection',
-      '--enable-features=NetworkService,NetworkServiceInProcess',
+      '--disable-blink-features=AutomationControlled',
+      '--window-size=1920,1080',
     ],
-    ignoreDefaultArgs: ['--disable-extensions'],
-    defaultViewport: null,
+    defaultViewport: {
+      width: 1920,
+      height: 1080
+    },
   });
 
   const page = await browser.newPage();

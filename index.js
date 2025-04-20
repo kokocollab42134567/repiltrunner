@@ -11,28 +11,28 @@ const DEBUG_HTML_FILE = './debug-page.html';
 
 (async () => {
   const browser = await puppeteer.launch({
-      headless: "new",  // Use 'new' for improved headless mode
-      protocolTimeout: 180000, // Increased protocol timeout for stability
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined, // Use default if not set
-      args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--disable-features=IsolateOrigins,site-per-process', // More stable site isolation
-          '--disable-web-security',
-          '--disable-http2', // Disable HTTP/2 if causing issues
-          '--proxy-server="direct://"',
-          '--proxy-bypass-list=*',
-          '--disable-background-timer-throttling',
-          '--disable-backgrounding-occluded-windows',
-          '--disable-renderer-backgrounding',
-          '--disable-accelerated-2d-canvas',
-          '--disable-ipc-flooding-protection',
-          '--enable-features=NetworkService,NetworkServiceInProcess',
-      ],
-      ignoreDefaultArgs: ['--disable-extensions'], // Allow extensions if needed
-      defaultViewport: null, // Avoid viewport resizing issues
+    headless: "new",
+    protocolTimeout: 180000,
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--disable-features=IsolateOrigins,site-per-process',
+      '--disable-web-security',
+      '--disable-http2',
+      '--proxy-server="direct://"',
+      '--proxy-bypass-list=*',
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding',
+      '--disable-accelerated-2d-canvas',
+      '--disable-ipc-flooding-protection',
+      '--enable-features=NetworkService,NetworkServiceInProcess',
+    ],
+    ignoreDefaultArgs: ['--disable-extensions'],
+    defaultViewport: null,
   });
 
   const page = await browser.newPage();
@@ -51,36 +51,47 @@ const DEBUG_HTML_FILE = './debug-page.html';
 
     console.log('✅ Logged in');
 
-    // Save cookies
     const cookies = await page.cookies();
     fs.writeFileSync(COOKIE_FILE, JSON.stringify(cookies, null, 2));
 
-    // Navigate to the REPL project
     await page.goto('https://replit.com/@kingdomsunion/AromaticKeySyntax', { waitUntil: 'networkidle2' });
     fs.writeFileSync(DEBUG_HTML_FILE, await page.content());
 
-    // Infinite monitor for the "Run" button
-    while (true) {
+    // Wait up to 2 minutes for the "Run" button
+    const startTime = Date.now();
+    const maxWaitTime = 120000; // 2 minutes
+    let clicked = false;
+
+    while (Date.now() - startTime < maxWaitTime) {
       try {
         const runButton = await page.$('button.useView_view__C2mnv.css-1qheakp');
         if (runButton) {
           console.log('▶️ "Run" button detected, clicking...');
           await runButton.click();
+          clicked = true;
+          break;
         } else {
           console.log('🔍 "Run" button not found, will retry...');
         }
       } catch (err) {
-        console.error('⚠️ Error in button loop:', err.message);
+        console.error('⚠️ Error in button check:', err.message);
       }
 
-      // Wait 5 seconds before checking again
-      await page.waitForTimeout(5000);
+      await page.waitForTimeout(5000); // Retry every 5 seconds
     }
 
-    // (Note: browser never closes here)
+    if (!clicked) {
+      console.warn('⏳ Timed out waiting for "Run" button after 2 minutes.');
+    }
+
+    // You can close browser here if you want
+    // await browser.close();
+
   } catch (e) {
     console.error('❌ Login failed or blocked. Saving HTML for debug.');
     const html = await page.content();
     fs.writeFileSync(DEBUG_HTML_FILE, html);
+    // Optionally close browser on error
+    // await browser.close();
   }
 })();

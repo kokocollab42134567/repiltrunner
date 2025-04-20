@@ -13,7 +13,7 @@ const COOKIE_FILE = './cookies.json';
   console.log('🚀 Launching browser...');
 
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: "new",
     protocolTimeout: 180000,
     timeout: 180000,
     args: [
